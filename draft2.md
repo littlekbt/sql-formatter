@@ -1,0 +1,143 @@
+<query expression> ::=
+  SELECT [<set quantifier>] <select list> <table expression>
+
+<set quantifier> ::= DISTINCT | ALL
+
+<select list> ::=
+  <asterisk>
+  | <select sublist> [{<comma> <select sublist>}]
+
+<select sublist> ::=
+  <derived column>
+  | <table name> <period> <asterisk>
+
+<derived column> ::= <column name> [ <as clause> ]
+
+<as clause> ::= [AS] <correlation name>
+
+-----------TABLE-------------
+
+<table expression> ::=
+  <from clause>
+  [ <where clause> ]
+  [ <group by clause> ]
+  [ <having clause> ]
+
+-----------FROM-------------
+
+<from clause> ::=
+  FROM <table reference> [ { <comma> <table reference> } ]
+
+<table reference> ::=
+  <table name> [ <correlation specification> ]
+  | <derived table> <correlation specification>
+  | <joined table>
+
+<derived table> ::= <sub query>
+
+<sub query> ::=  <left paren> <query expression> <right paren>
+
+<correlation specification> ::= [AS] <correlation name>
+
+<joined table> ::=
+  <cross join>
+  | <qualified join>
+  | <left paren> <joined table> <right paren>
+
+<cross join> ::=
+
+<qualified join> ::=
+  <table reference> [join type] JOIN <table reference>
+
+<join type> ::=
+  INNER
+  | <outer join type> [ OUTER ]
+  | UNION
+
+<outer join type> ::= LEFT | RIGHT
+
+-----------WHERE-------------
+
+<where clause> ::= WHERE <search condition>
+
+<search condition> ::=
+  <boolean term>
+  | <search condition> OR <boolean term>
+
+<boolean term> ::=
+  <boolean factor>
+  | <boolean term> AND <boolean factor>
+
+<boolean factor> ::= [ NOT ] <predicate>
+
+<predicate> ::= PREDICATE
+
+-----------GROUP BY-------------
+
+<group by clause> ::= GROUP BY <grouping column reference list>
+
+<grouping column reference list> ::=
+  <column name> [ { <comma> <column name> } ]
+
+-----------HAVING-------------
+
+<having clause>  ::= HAVING <search condition>
+
+-----------COMMON-------------
+
+<table name>  ::= TABLE NAME
+
+<column name> ::= COLUMN NAME
+
+<correlation name> ::= CORRELATION NAME
+
+<asterisk> ::= *
+<period>   ::= .
+<comma>    ::= ,
+
+<left paren>  ::= (
+<right paren> ::= )
+
+
+// このBNFを元に、区切りたいところでアクションを起こしてひとまとめにして配列に入れてあげればいけそう。な予感。
+
+ver,1
+[
+  SELECT,
+    [SELECT LIST],
+    [TABLE EXPRESSION]
+]
+
+ver,2
+[
+  SELECT,
+    [SELECT LIST],
+      [
+        [FROM CLAUSE],
+        [WHERE CLAUSE],
+        [GROUP BY CLAUSE],
+        [HAVING CLAUSE]
+      ]
+]
+
+ver,3
+[
+  SELECT,
+    [SELECT LIST],
+    [
+      [FROM CLAUSE],
+      [WHERE,
+        [SEARCH CONDITION]
+      ],
+      [GROUP BY CLAUSE],
+      [HAVING,
+        [SEARCH CONDITION]
+      ]
+    ]
+]
+
+ver,4 # SEARCH CONDITIONをさらに細分化する。
+[SELECT, [SELECT LIST], [[FROM CLAUSE], [WHERE, [SEARCH CONDITION]], [GROUP BY CLAUSE], [HAVING, [SEARCH CONDITION]]]]
+
+ver,5 # joinに対応
+
