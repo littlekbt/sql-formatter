@@ -1,6 +1,6 @@
 class SQLFormatter
 rule
-  query_expression: SELECT select_list table_expression
+  query_expression: SELECT select_list table_expression {result = [val[0], [val[1], val[2]]]}
 
   select_list: SELECT_LIST
 
@@ -10,6 +10,7 @@ end
 ---- inner
 
   def initialize
+    @parsed_sql = []
   end
 
   def parse(str)
@@ -26,17 +27,27 @@ end
       end
       str = $'
     end
-    p @q
     @q.push [false, '$end']
-    do_parse
+    @parsed_sql = do_parse
   end
 
   def next_token
     @q.shift
   end
 
----- footer
+  def parsed_sql
+    @parsed_sql
+  end
 
-parser = SQLFormatter.new
-str = 'SELECT users.id, users.name FROM users INNER JOIN blogs on users.id = blogs.user_id WHERE users.id = 1'
-parser.parse(str)
+  def format(sql_arr=parsed_sql, i=0)
+    sql_arr.each do |e|
+      if e.is_a?(Array)
+        i += i + 2
+        format(e, i)
+      else
+        puts " " * i + e
+      end
+    end
+  end
+
+---- footer

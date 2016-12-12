@@ -10,6 +10,7 @@ class SQLFormatter < Racc::Parser
 module_eval(<<'...end sql_formatter.y/module_eval...', 'sql_formatter.y', 11)
 
   def initialize
+    @parsed_sql = []
   end
 
   def parse(str)
@@ -26,13 +27,27 @@ module_eval(<<'...end sql_formatter.y/module_eval...', 'sql_formatter.y', 11)
       end
       str = $'
     end
-    p @q
     @q.push [false, '$end']
-    do_parse
+    @parsed_sql = do_parse
   end
 
   def next_token
     @q.shift
+  end
+
+  def parsed_sql
+    @parsed_sql
+  end
+
+  def format(sql_arr=parsed_sql, i=0)
+    sql_arr.each do |e|
+      if e.is_a?(Array)
+        i += i + 2
+        format(e, i)
+      else
+        puts " " * i + e
+      end
+    end
   end
 
 ...end sql_formatter.y/module_eval...
@@ -64,7 +79,7 @@ racc_goto_default = [
 
 racc_reduce_table = [
   0, 0, :racc_error,
-  3, 6, :_reduce_none,
+  3, 6, :_reduce_1,
   1, 7, :_reduce_none,
   1, 8, :_reduce_none ]
 
@@ -116,7 +131,12 @@ Racc_debug_parser = false
 
 # reduce 0 omitted
 
-# reduce 1 omitted
+module_eval(<<'.,.,', 'sql_formatter.y', 2)
+  def _reduce_1(val, _values, result)
+    result = [val[0], [val[1], val[2]]]
+    result
+  end
+.,.,
 
 # reduce 2 omitted
 
@@ -129,6 +149,3 @@ end
 end   # class SQLFormatter
 
 
-parser = SQLFormatter.new
-str = 'SELECT users.id, users.name FROM users INNER JOIN blogs on users.id = blogs.user_id WHERE users.id = 1'
-parser.parse(str)
