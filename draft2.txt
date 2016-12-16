@@ -104,36 +104,42 @@
 ver,1
 [
   SELECT,
-    [SELECT LIST],
-    [TABLE EXPRESSION]
+    [SELECT_LIST],
+    [TABLE_EXPRESSION]
 ]
 
 ver,2
 [
   SELECT,
-    [SELECT LIST],
-      [
-        [FROM CLAUSE],
-        [WHERE CLAUSE],
-        [GROUP BY CLAUSE],
-        [HAVING CLAUSE]
-      ]
+    [SELECT_LIST],
+    [FROM_CLAUSE],
+    [WHERE_CLAUSE],
+    [ORDER_BY_CLAUSE],
+    [HAVING_CLAUSE]
 ]
 
 ver,3
 [
   SELECT,
-    [SELECT LIST],
-    [
-      [FROM CLAUSE],
-      [WHERE,
-        [SEARCH CONDITION]
-      ],
-      [GROUP BY CLAUSE],
-      [HAVING,
-        [SEARCH CONDITION]
-      ]
-    ]
+    [SELECT_LIST],
+  [FROM, 
+    [FROM_CONDITION]
+  ],
+  [WHERE,
+    [WHERE_CONDITION]
+  ],
+  [GROUP_BY, 
+    [GROUP_BY_CONDITION]
+  ],
+  [HAVING,
+    [HAVING_CONDITION]
+  ],
+  [ORDER_BY,
+    [ORDER_BY_CONDITION]
+  ],
+  [LIMIT,
+    [LIMIT_CONDITION]
+  ]
 ]
 
 ver,4 # SEARCH CONDITIONをさらに細分化する。
