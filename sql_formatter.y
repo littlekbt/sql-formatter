@@ -8,18 +8,24 @@ rule
                   | from_clause cond_clause
                   | from_clause cond_clause cond_clause
                   | from_clause cond_clause cond_clause cond_clause
+                  | from_clause cond_clause cond_clause cond_clause cond_clause 
+                  | from_clause cond_clause cond_clause cond_clause cond_clause cond_clause
 
   from_clause: FROM FROM_CONDITION {@result.unshift [val[0], [val[1]]]}
 
-  cond_clause: where_clause
-             | order_clause
-             | having_clause
+  cond_clause: cond_type condition {@result.push [val[0], [val[1]]]}
 
-  where_clause: WHERE WHERE_CONDITION       {@result.push [val[0], [val[1]]]}
+  cond_type: WHERE
+           | ORDER_BY
+           | HAVING
+           | GROUP_BY
+           | LIMIT
 
-  order_clause: ORDER_BY ORDER_BY_CONDITION {@result.push [val[0], [val[1]]]}
-
-  having_clause: HAVING HAVING_CONDITION    {@result.push [val[0], [val[1]]]}
+  condition: WHERE_CONDITION
+           | ORDER_BY_CONDITION
+           | HAVING_CONDITION
+           | GROUP_BY_CONDITION
+           | LIMIT_CONDITION
 end
 
 ---- inner
@@ -38,18 +44,24 @@ end
         @q.push [:SELECT, $&]
       when /^\*|^.+(?=\s+FROM)/i
         @q.push [:SELECT_LIST, $&]
-      when /(?=^FROM\s+.+?(\s+(?:WHERE|ORDER\sBY|HAVING))|)^(FROM)\s+(.+?)(?(1)(?=\s+(?:WHERE|ORDER\sBY|HAVING))|)/i # ((cond)truepat|falsepat) condには、後方参照の数字を入れる。
+      when /(?=^FROM\s+.+?(\s+(?:WHERE|ORDER\sBY|HAVING|GROUP\sBY|LIMIT))|)^(FROM)\s+(.+?)(?(1)(?=\s+(?:WHERE|ORDER\sBY|HAVING|GROUP\sBY|LIMIT))|)/i # ((cond)truepat|falsepat) condには、後方参照の数字を入れる。
         @q.push [:FROM,           $2]
         @q.push [:FROM_CONDITION, $3]
-      when /(?=^WHERE\s+.+?(\s+(?:ORDER\sBY|HAVING))|)^(WHERE)\s+(.+?)(?(1)(?=\s+(?:ORDER\sBY|HAVING))|)/i
+      when /(?=^WHERE\s+.+?(\s+(?:ORDER\sBY|HAVING|GROUP\sBY|LIMIT))|)^(WHERE)\s+(.+?)(?(1)(?=\s+(?:ORDER\sBY|HAVING|GROUP\sBY|LIMIT))|)/i
         @q.push [:WHERE,           $2]
         @q.push [:WHERE_CONDITION, $3]
-      when /(?=^ORDER\sBY\s+.+?(\s+(?:HAVING))|)^(ORDER\sBY)\s+(.+?)(?(1)(?=\s+(?:HAVING))|)/i
+      when /(?=^ORDER\sBY\s+.+?(\s+(?:HAVING|GROUP\sBY|LIMIT))|)^(ORDER\sBY)\s+(.+?)(?(1)(?=\s+(?:HAVING|GROUP\sBY|LIMIT))|)/i
         @q.push [:ORDER_BY,           $2]
         @q.push [:ORDER_BY_CONDITION, $3]
-      when /^(HAVING)\s+(.+)/i
-        @q.push [:HAVING,           $1]
-        @q.push [:HAVING_CONDITION, $2]
+      when /(?=^HAVING\s+.+?(\s+(?:GROUP\sBY|LIMIT))|)^(HAVING)\s+(.+?)(?(1)(?=\s+(?:GROUP\sBY|LIMIT))|)/i
+        @q.push [:HAVING,           $2]
+        @q.push [:HAVING_CONDITION, $3]
+      when /(?=^GROUP\sBY\s+.+?(\s+(?:LIMIT))|)^(GROUP\sBY)\s+(.+?)(?(1)(?=\s+(?:LIMIT))|)/i
+        @q.push [:GROUP_BY,           $2]
+        @q.push [:GROUP_BY_CONDITION, $3]
+      when /^(LIMIT)\s+(.+)/i
+        @q.push [:LIMIT,           $1]
+        @q.push [:LIMIT_CONDITION, $2]
       end
       str = $'
     end

@@ -7,7 +7,7 @@
 require 'racc/parser.rb'
 class SQLFormatter < Racc::Parser
 
-module_eval(<<'...end sql_formatter.y/module_eval...', 'sql_formatter.y', 26)
+module_eval(<<'...end sql_formatter.y/module_eval...', 'sql_formatter.y', 32)
 
   def initialize
     @result     = []
@@ -23,18 +23,24 @@ module_eval(<<'...end sql_formatter.y/module_eval...', 'sql_formatter.y', 26)
         @q.push [:SELECT, $&]
       when /^\*|^.+(?=\s+FROM)/i
         @q.push [:SELECT_LIST, $&]
-      when /(?=^FROM\s+.+?(\s+(?:WHERE|ORDER\sBY|HAVING))|)^(FROM)\s+(.+?)(?(1)(?=\s+(?:WHERE|ORDER\sBY|HAVING))|)/i # ((cond)truepat|falsepat) condには、後方参照の数字を入れる。
+      when /(?=^FROM\s+.+?(\s+(?:WHERE|ORDER\sBY|HAVING|GROUP\sBY|LIMIT))|)^(FROM)\s+(.+?)(?(1)(?=\s+(?:WHERE|ORDER\sBY|HAVING|GROUP\sBY|LIMIT))|)/i # ((cond)truepat|falsepat) condには、後方参照の数字を入れる。
         @q.push [:FROM,           $2]
         @q.push [:FROM_CONDITION, $3]
-      when /(?=^WHERE\s+.+?(\s+(?:ORDER\sBY|HAVING))|)^(WHERE)\s+(.+?)(?(1)(?=\s+(?:ORDER\sBY|HAVING))|)/i
+      when /(?=^WHERE\s+.+?(\s+(?:ORDER\sBY|HAVING|GROUP\sBY|LIMIT))|)^(WHERE)\s+(.+?)(?(1)(?=\s+(?:ORDER\sBY|HAVING|GROUP\sBY|LIMIT))|)/i
         @q.push [:WHERE,           $2]
         @q.push [:WHERE_CONDITION, $3]
-      when /(?=^ORDER\sBY\s+.+?(\s+(?:HAVING))|)^(ORDER\sBY)\s+(.+?)(?(1)(?=\s+(?:HAVING))|)/i
+      when /(?=^ORDER\sBY\s+.+?(\s+(?:HAVING|GROUP\sBY|LIMIT))|)^(ORDER\sBY)\s+(.+?)(?(1)(?=\s+(?:HAVING|GROUP\sBY|LIMIT))|)/i
         @q.push [:ORDER_BY,           $2]
         @q.push [:ORDER_BY_CONDITION, $3]
-      when /^(HAVING)\s+(.+)/i
-        @q.push [:HAVING,           $1]
-        @q.push [:HAVING_CONDITION, $2]
+      when /(?=^HAVING\s+.+?(\s+(?:GROUP\sBY|LIMIT))|)^(HAVING)\s+(.+?)(?(1)(?=\s+(?:GROUP\sBY|LIMIT))|)/i
+        @q.push [:HAVING,           $2]
+        @q.push [:HAVING_CONDITION, $3]
+      when /(?=^GROUP\sBY\s+.+?(\s+(?:LIMIT))|)^(GROUP\sBY)\s+(.+?)(?(1)(?=\s+(?:LIMIT))|)/i
+        @q.push [:GROUP_BY,           $2]
+        @q.push [:GROUP_BY_CONDITION, $3]
+      when /^(LIMIT)\s+(.+)/i
+        @q.push [:LIMIT,           $1]
+        @q.push [:LIMIT_CONDITION, $2]
       end
       str = $'
     end
@@ -65,56 +71,67 @@ module_eval(<<'...end sql_formatter.y/module_eval...', 'sql_formatter.y', 26)
 ##### State transition tables begin ###
 
 racc_action_table = [
-    14,    14,    15,    15,    16,    16,    14,     2,    15,     3,
-    16,     5,     6,     9,    17,    19,    20,    21 ]
+    12,    13,    14,    15,    16,    12,    13,    14,    15,    16,
+    20,    21,    22,    23,    24,    12,    13,    14,    15,    16,
+    12,    13,    14,    15,    16,    12,    13,    14,    15,    16,
+     2,     3,     5,     6,     9,    17 ]
 
 racc_action_check = [
-     8,    10,     8,    10,     8,    10,    18,     0,    18,     1,
-    18,     2,     3,     4,     9,    14,    15,    16 ]
+     8,     8,     8,     8,     8,    10,    10,    10,    10,    10,
+    11,    11,    11,    11,    11,    18,    18,    18,    18,    18,
+    25,    25,    25,    25,    25,    26,    26,    26,    26,    26,
+     0,     1,     2,     3,     4,     9 ]
 
 racc_action_pointer = [
-     5,     9,     8,    12,     9,   nil,   nil,   nil,    -6,     9,
-    -5,   nil,   nil,   nil,     8,     7,     6,   nil,     0,   nil,
-   nil,   nil,   nil ]
+    28,    31,    29,    33,    30,   nil,   nil,   nil,    -6,    30,
+    -1,    -1,   nil,   nil,   nil,   nil,   nil,   nil,     9,   nil,
+   nil,   nil,   nil,   nil,   nil,    14,    19,   nil ]
 
 racc_action_default = [
-   -14,   -14,   -14,   -14,   -14,    -2,    23,    -1,    -3,   -14,
-    -4,    -8,    -9,   -10,   -14,   -14,   -14,    -7,    -5,   -11,
-   -12,   -13,    -6 ]
+   -21,   -21,   -21,   -21,   -21,    -2,    28,    -1,    -3,   -21,
+    -4,   -21,   -11,   -12,   -13,   -14,   -15,    -9,    -5,   -10,
+   -16,   -17,   -18,   -19,   -20,    -6,    -7,    -8 ]
 
 racc_goto_table = [
-    10,     1,    18,     4,     7,     8,   nil,   nil,   nil,   nil,
-    22 ]
+    10,     1,    18,     4,     7,     8,    19,   nil,   nil,   nil,
+    25,   nil,   nil,   nil,   nil,   nil,   nil,    26,    27 ]
 
 racc_goto_check = [
-     5,     1,     5,     2,     3,     4,   nil,   nil,   nil,   nil,
-     5 ]
+     5,     1,     5,     2,     3,     4,     7,   nil,   nil,   nil,
+     5,   nil,   nil,   nil,   nil,   nil,   nil,     5,     5 ]
 
 racc_goto_pointer = [
-   nil,     1,     1,     0,     1,    -8,   nil,   nil,   nil ]
+   nil,     1,     1,     0,     1,    -8,   nil,    -5 ]
 
 racc_goto_default = [
-   nil,   nil,   nil,   nil,   nil,   nil,    11,    12,    13 ]
+   nil,   nil,   nil,   nil,   nil,   nil,    11,   nil ]
 
 racc_reduce_table = [
   0, 0, :racc_error,
-  3, 13, :_reduce_1,
-  1, 14, :_reduce_none,
-  1, 15, :_reduce_none,
-  2, 15, :_reduce_none,
-  3, 15, :_reduce_none,
-  4, 15, :_reduce_none,
-  2, 16, :_reduce_7,
-  1, 17, :_reduce_none,
-  1, 17, :_reduce_none,
-  1, 17, :_reduce_none,
-  2, 18, :_reduce_11,
-  2, 19, :_reduce_12,
-  2, 20, :_reduce_13 ]
+  3, 17, :_reduce_1,
+  1, 18, :_reduce_none,
+  1, 19, :_reduce_none,
+  2, 19, :_reduce_none,
+  3, 19, :_reduce_none,
+  4, 19, :_reduce_none,
+  5, 19, :_reduce_none,
+  6, 19, :_reduce_none,
+  2, 20, :_reduce_9,
+  2, 21, :_reduce_10,
+  1, 22, :_reduce_none,
+  1, 22, :_reduce_none,
+  1, 22, :_reduce_none,
+  1, 22, :_reduce_none,
+  1, 22, :_reduce_none,
+  1, 23, :_reduce_none,
+  1, 23, :_reduce_none,
+  1, 23, :_reduce_none,
+  1, 23, :_reduce_none,
+  1, 23, :_reduce_none ]
 
-racc_reduce_n = 14
+racc_reduce_n = 21
 
-racc_shift_n = 23
+racc_shift_n = 28
 
 racc_token_table = {
   false => 0,
@@ -124,13 +141,17 @@ racc_token_table = {
   :FROM => 4,
   :FROM_CONDITION => 5,
   :WHERE => 6,
-  :WHERE_CONDITION => 7,
-  :ORDER_BY => 8,
-  :ORDER_BY_CONDITION => 9,
-  :HAVING => 10,
-  :HAVING_CONDITION => 11 }
+  :ORDER_BY => 7,
+  :HAVING => 8,
+  :GROUP_BY => 9,
+  :LIMIT => 10,
+  :WHERE_CONDITION => 11,
+  :ORDER_BY_CONDITION => 12,
+  :HAVING_CONDITION => 13,
+  :GROUP_BY_CONDITION => 14,
+  :LIMIT_CONDITION => 15 }
 
-racc_nt_base = 12
+racc_nt_base = 16
 
 racc_use_result_var = true
 
@@ -158,20 +179,23 @@ Racc_token_to_s_table = [
   "FROM",
   "FROM_CONDITION",
   "WHERE",
-  "WHERE_CONDITION",
   "ORDER_BY",
-  "ORDER_BY_CONDITION",
   "HAVING",
+  "GROUP_BY",
+  "LIMIT",
+  "WHERE_CONDITION",
+  "ORDER_BY_CONDITION",
   "HAVING_CONDITION",
+  "GROUP_BY_CONDITION",
+  "LIMIT_CONDITION",
   "$start",
   "query_expression",
   "select_list",
   "table_expression",
   "from_clause",
   "cond_clause",
-  "where_clause",
-  "order_clause",
-  "having_clause" ]
+  "cond_type",
+  "condition" ]
 
 Racc_debug_parser = false
 
@@ -196,39 +220,43 @@ module_eval(<<'.,.,', 'sql_formatter.y', 2)
 
 # reduce 6 omitted
 
-module_eval(<<'.,.,', 'sql_formatter.y', 11)
-  def _reduce_7(val, _values, result)
+# reduce 7 omitted
+
+# reduce 8 omitted
+
+module_eval(<<'.,.,', 'sql_formatter.y', 13)
+  def _reduce_9(val, _values, result)
     @result.unshift [val[0], [val[1]]]
     result
   end
 .,.,
 
-# reduce 8 omitted
-
-# reduce 9 omitted
-
-# reduce 10 omitted
-
-module_eval(<<'.,.,', 'sql_formatter.y', 17)
-  def _reduce_11(val, _values, result)
+module_eval(<<'.,.,', 'sql_formatter.y', 15)
+  def _reduce_10(val, _values, result)
     @result.push [val[0], [val[1]]]
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'sql_formatter.y', 19)
-  def _reduce_12(val, _values, result)
-    @result.push [val[0], [val[1]]]
-    result
-  end
-.,.,
+# reduce 11 omitted
 
-module_eval(<<'.,.,', 'sql_formatter.y', 21)
-  def _reduce_13(val, _values, result)
-    @result.push [val[0], [val[1]]]
-    result
-  end
-.,.,
+# reduce 12 omitted
+
+# reduce 13 omitted
+
+# reduce 14 omitted
+
+# reduce 15 omitted
+
+# reduce 16 omitted
+
+# reduce 17 omitted
+
+# reduce 18 omitted
+
+# reduce 19 omitted
+
+# reduce 20 omitted
 
 def _reduce_none(val, _values, result)
   val[0]
