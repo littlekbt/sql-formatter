@@ -27,12 +27,65 @@ rule
            | GROUP_BY_CONDITION
            | LIMIT_CONDITION
 
-  search_conditions: SEARCH_CONDITION {p "search_condtions #{val}"; @result.last.push [val[0]]}
-                   # | LEFT_BAREN SEARCH_CONDITION {p "left_baren search_condtions #{val}"; @result.last.last.push [val[0], val[1]]}
-                   # | SEARCH_CONDITION RIGHT_BAREN {p "search_condtions right_baren #{val}"; @result.last.last.push [val[0], val[1]]}
-                   | search_conditions CONJUNCTION SEARCH_CONDITION {p "search_conditions conjunction search_conditions #{val}";@result.last.last.push val[1]; @result.last.last.push val[2]}
+  search_conditions: search_condition
+                   | search_conditions search_condition
 
-  # search_condition: 
+  search_condition: conjunction left_baren SEARCH_CONDITION right_baren 
+  {
+    p val
+    p @result
+    p '--------------------------'
+    target = nil
+    condition = nil
+
+                # (search_condition) の場合
+    condition = if val[1] && val[3]
+                  [val[1], [val[2]], val[3]]
+
+                # (search_condition の場合
+                elsif val[1]
+                  [val[1], [val[2]]]
+
+                # search_condition) の場合
+                elsif val[3]
+                  [[val[2]], val[3]]
+
+                # search_condition の場合
+                else
+                  [val[2]]
+                end
+
+    # and, orがあるかどうか
+    if val[0]
+      condition.shift val[0]
+    end
+
+    # まずwhere句を見つける。
+
+    # すでにwhereの条件部があるかどうか
+    # where句の条件部の最後の要素が配列かどうか
+    if tagrget && target.is_a? Array
+      # conditionの中身だけ入れる。
+    else
+      # conditionごと入れる。
+    end
+
+  }
+  # 次に入れるべきwhere句を見つける。
+  # left_barenがあったらsearch_clauseは配列にする。left_barenは入れない。
+  # 一番後ろの要素が配列だったら、その配列入れる。そうでなかったら、普通に入れる。
+  # right_barenがあったらsearch_clauseは一番後ろの要素の配列に入れて、right_barenは入れない。
+  # or, andは１つの要素として入れる。
+
+  # あるかもしれないしないかもしれない
+  conjunction: 
+             | CONJUNCTION 
+
+  left_baren: 
+            | LEFT_BAREN
+
+  right_baren: 
+             | RIGHT_BAREN
 
 end
 
